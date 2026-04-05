@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "579615102822",
+    "project_id": "message-c44ce",
+    "storage_bucket": "message-c44ce.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:579615102822:android:f470207a8ab5d427dedaa7",
+        "android_client_info": {
+          "package_name": "mr.abdallahimessage.messanger"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCj9barGWf2yNpjmFPhTs9tahZOv2O1pg4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
