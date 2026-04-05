@@ -20,9 +20,9 @@ A real-time chat application built with Flutter and Firebase.
 
 ## Screenshots
 
-| Login Screen | Chat Screen |
+| Login Screen |
 |---|---|
-| ![Login](assets/fonts/chat1.png) | ![Chat](assets/fonts/icon.png) |
+| ![Login](assets/fonts/chat1.png) |
 
 ## Getting Started
 
