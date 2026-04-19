@@ -99,6 +99,4 @@ flutter run
 
 AB3288 - https://github.com/AB3288
 
-## License
 
-MIT License
