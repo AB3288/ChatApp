@@ -1,11 +1,10 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:messanger/screens/chat_screen.dart';
+import 'services/session_service.dart';
 import 'screens/welcom_screen.dart';
-import 'package:firebase_core/firebase_core.dart';
+import 'screens/chat_screen.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
   runApp(const MyApp());
 }
 
@@ -16,25 +15,25 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Messanger',
-      home: StreamBuilder<User?>(
-        stream: FirebaseAuth.instance.authStateChanges(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Scaffold(
-                    body: Center(child: CircularProgressIndicator()),
-                  );
-                }
-
-                if (snapshot.hasData) {
-                  return ChatScreen(
-                    email: snapshot.data!.email!, 
-                  );
-                } else {
-                  return WelcomScreen();
-                }
-              },
-            ),
+      title: 'ChatApp',
+      home: FutureBuilder<Map<String, dynamic>?>(
+        future: SessionService.getSession(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Scaffold(
+              backgroundColor: Colors.black,
+              body: Center(child: CircularProgressIndicator(color: Colors.white)),
+            );
+          }
+          if (snapshot.hasData && snapshot.data != null) {
+            return ChatScreen(
+              email: snapshot.data!['email'] as String,
+              userId: snapshot.data!['id'] as int,
+            );
+          }
+          return const WelcomScreen();
+        },
+      ),
     );
   }
 }

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-
+import '../services/api_service.dart';
+import '../services/session_service.dart';
+import 'message_screen.dart';
+import 'welcom_screen.dart';
 class ChatScreen extends StatefulWidget {
   final String email;
-  const ChatScreen({super.key, required this.email});
+  final int userId;
+  const ChatScreen({super.key, required this.email, required this.userId});
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -12,6 +14,42 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   TextEditingController searchController = TextEditingController();
+  List<dynamic> users = [];
+  List<dynamic> filteredUsers = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUsers();
+  }
+
+  Future<void> _loadUsers() async {
+    try {
+      final data = await ApiService.getUsers(widget.userId);
+      setState(() {
+        users = data;
+        filteredUsers = data;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  void _filterUsers(String query) {
+    setState(() {
+      filteredUsers = users.where((u) =>
+        u['email'].toString().toLowerCase().contains(query.toLowerCase())
+      ).toList();
+    });
+  }
+
+  @override
+  void dispose() {
+    searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,90 +58,79 @@ class _ChatScreenState extends State<ChatScreen> {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        title: Text(
-          "Chat - $nom",
-          style: TextStyle(color: Colors.white),
-        ),
+        title: Text("Chat - $nom", style: TextStyle(color: Colors.white)),
         backgroundColor: Color(0xff4f4e4e),
-        iconTheme: IconThemeData(color: Colors.white),
         actions: [
           IconButton(
-            icon: Icon(Icons.logout),
+            icon: Icon(Icons.logout, color: Colors.white),
             onPressed: () async {
-              await FirebaseAuth.instance.signOut();
-              Navigator.pop(context);
+              await SessionService.clearSession();
+              if (!mounted) return;
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) => WelcomScreen()),
+                (route) => false,
+              );
             },
           )
         ],
       ),
-
       body: Column(
         children: [
-          // 🔍 SEARCH
           Padding(
             padding: const EdgeInsets.all(10),
             child: TextField(
               controller: searchController,
-              onChanged: (value) {
-                setState(() {});
-              },
+              onChanged: _filterUsers,
+              style: TextStyle(color: Colors.white),
               decoration: InputDecoration(
-                labelText: "Search email",
-                prefixIcon: Icon(Icons.search),
-                border: OutlineInputBorder(
+                labelText: "Search",
+                labelStyle: TextStyle(color: Colors.grey),
+                prefixIcon: Icon(Icons.search, color: Colors.grey),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.grey),
                 ),
               ),
             ),
           ),
-
-          Divider(color: Colors.white),
-
-          // 📋 LIST USERS
+          Divider(color: Colors.grey),
           Expanded(
-            child: StreamBuilder(
-              stream: FirebaseFirestore.instance
-                  .collection('users')
-                  .snapshots(),
-              builder: (context, snapshot) {
-                if (!snapshot.hasData) {
-                  return Center(child: CircularProgressIndicator());
-                }
-
-                var users = snapshot.data!.docs;
-
-                // 🔎 FILTER
-                var filteredUsers = users.where((user) {
-                  String email =
-                      user['email'].toString().toLowerCase();
-                  String search =
-                      searchController.text.toLowerCase();
-
-                  return email.contains(search);
-                }).toList();
-
-                return ListView.builder(
-                  itemCount: filteredUsers.length,
-                  itemBuilder: (context, index) {
-                    var user = filteredUsers[index];
-                    String email = user['email'];
-
-                    return ListTile(
-                      title: Text(
-                        email,
-                        style: TextStyle(color: Colors.white),
+            child: _isLoading
+                ? Center(child: CircularProgressIndicator(color: Colors.white))
+                : filteredUsers.isEmpty
+                    ? Center(child: Text("Aucun utilisateur", style: TextStyle(color: Colors.grey)))
+                    : ListView.builder(
+                        itemCount: filteredUsers.length,
+                        itemBuilder: (context, index) {
+                          final user = filteredUsers[index];
+                          final userName = user['email'].split("@")[0];
+                          return ListTile(
+                            leading: CircleAvatar(
+                              backgroundColor: Color(0xff2e386b),
+                              child: Text(
+                                userName[0].toUpperCase(),
+                                style: TextStyle(color: Colors.white),
+                              ),
+                            ),
+                            title: Text(userName, style: TextStyle(color: Colors.white)),
+                            subtitle: Text(user['email'], style: TextStyle(color: Colors.grey)),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => MessageScreen(
+                                    currentUserId: widget.userId,
+                                    otherUserId: int.parse(user['id'].toString()),
+                                    otherUserEmail: user['email'],
+                                  ),
+                                ),
+                              );
+                            },
+                          );
+                        },
                       ),
-                      leading: Icon(Icons.person, color: Colors.white),
-
-                      // 🔥 عند الضغط (مستقبلاً chat)
-                      onTap: () {
-                        print("Selected: $email");
-                      },
-                    );
-                  },
-                );
-              },
-            ),
           ),
         ],
       ),

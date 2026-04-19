@@ -1,8 +1,9 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:messanger/screens/chat_screen.dart';
+import '../services/api_service.dart';
+import '../services/session_service.dart';
 import '../widgets/my_button.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'chat_screen.dart';
+
 class WelcomScreen extends StatefulWidget {
   const WelcomScreen({super.key});
 
@@ -14,6 +15,8 @@ class _WelcomScreenState extends State<WelcomScreen> {
   late TextEditingController emailController;
   late TextEditingController passwordController;
   bool _obscurePassword = true;
+  bool _isLoading = false;
+
   @override
   void initState() {
     super.initState();
@@ -28,7 +31,49 @@ class _WelcomScreenState extends State<WelcomScreen> {
     super.dispose();
   }
 
-  var user = FirebaseAuth.instance;
+  Future<void> _handleAuth() async {
+    String email = emailController.text.trim();
+    String password = passwordController.text.trim();
+
+    if (email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Remplis tous les champs")),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final data = await ApiService.auth(email, password);
+      if (data['success']) {
+        await SessionService.saveSession(data['user']['id'], data['user']['email']);
+        if (!mounted) return;
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ChatScreen(
+              email: data['user']['email'],
+              userId: data['user']['id'],
+            ),
+          ),
+        );
+      } else {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(data['error'] ?? "Erreur")),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Erreur connexion: $e")),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -39,16 +84,10 @@ class _WelcomScreenState extends State<WelcomScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Logo
             Container(
               height: 180,
-              child: Image.asset(
-                "assets/fonts/chat1.png",
-                fit: BoxFit.contain,
-              ),
+              child: Image.asset("assets/fonts/chat1.png", fit: BoxFit.contain),
             ),
-
-            // Titre
             Text(
               "ChatApp",
               textAlign: TextAlign.center,
@@ -59,103 +98,46 @@ class _WelcomScreenState extends State<WelcomScreen> {
                 color: Color(0xff2e386b),
               ),
             ),
-
             SizedBox(height: 30),
-
-            // Champ Email
             TextField(
               controller: emailController,
               keyboardType: TextInputType.emailAddress,
               decoration: InputDecoration(
-                focusColor: Colors.white,
                 labelText: "Email",
-                hintText: "exemple@email.com",
                 prefixIcon: Icon(Icons.email_outlined),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Color.fromARGB(255, 205, 210, 235), width: 2),
+                  borderSide: BorderSide(color: Colors.white, width: 2),
                 ),
               ),
             ),
-
             SizedBox(height: 16),
-
-            // Champ Mot de passe
             TextField(
               controller: passwordController,
               obscureText: _obscurePassword,
               decoration: InputDecoration(
-                focusColor: Colors.white,
                 labelText: "Mot de passe",
-                hintText: "••••••••",
                 prefixIcon: Icon(Icons.lock_outline),
                 suffixIcon: IconButton(
-                  icon: Icon(
-                    _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      _obscurePassword = !_obscurePassword;
-                    });
-                  },
+                  icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
+                  onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                 ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Color.fromARGB(255, 171, 172, 178), width: 2),
+                  borderSide: BorderSide(color: Colors.white, width: 2),
                 ),
               ),
             ),
-
             SizedBox(height: 24),
-
-            // Bouton Sign in
-            MyButton(
-              title: "Sign in || Sing up",
-              color: const Color.fromARGB(255, 120, 119, 119),
-              onpress:  () async {
-                String email = emailController.text.trim();
-                String password = passwordController.text.trim();
-                if (email.isEmpty || password.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text("Remplis tous les champs")),
-                  );
-                  return;
-                }
-                try {
-                  await user.signInWithEmailAndPassword(
-                    email: email,
-                    password: password,
-                  );
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder:(context)=> ChatScreen(email: email,)),
-                  );
-                } on FirebaseAuthException catch (e) {
-                    if (e.code == 'user-not-found' || e.code == 'invalid-credential') {
-                      // Crée le compte
-                      await user.createUserWithEmailAndPassword(
-                        email: email,
-                        password: password,
-                      );
-                      await FirebaseFirestore.instance
-                        .collection('users')
-                        .doc(user.currentUser!.uid)
-                        .set({
-                          'email': email,
-                          'uid': user.currentUser!.uid,
-                        });
-                      if (!mounted) return;
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => ChatScreen(email: email,)));
-                    }
-                  }
-              },
-            ),
+            _isLoading
+                ? Center(child: CircularProgressIndicator(color: Colors.white))
+                : MyButton(
+                    title: "Sign in || Sign up",
+                    color: const Color.fromARGB(255, 120, 119, 119),
+                    onpress: _handleAuth,
+                  ),
           ],
         ),
       ),
