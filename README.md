@@ -86,23 +86,6 @@ static const String baseUrl = "http://YOUR_IP/chatapp_api";
 flutter run
 ```
 
-## Project Structure
-lib/
-├── main.dart
-├── screens/
-│   ├── welcom_screen.dart
-│   ├── chat_screen.dart
-│   └── message_screen.dart
-├── services/
-│   ├── api_service.dart
-│   └── session_service.dart
-└── widgets/
-└── my_button.dart
-chatapp_api/
-├── config.php
-├── auth.php
-├── users.php
-└── messages.php
 ## API Endpoints
 
 | Method | URL | Description |
