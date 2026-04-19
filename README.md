@@ -3,11 +3,11 @@
 A real-time chat application built with Flutter, PHP and MySQL.
 
 ## Architecture
-Flutter (Frontend)
-down HTTP
-PHP REST API (Backend)
-down
-MySQL (phpMyAdmin)
+- Flutter (Frontend)
+- down HTTP
+- PHP REST API (Backend)
+- down
+- MySQL (phpMyAdmin)
 ## Features
 
 - Sign in / Sign up automatic
