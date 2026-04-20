@@ -75,9 +75,9 @@ CREATE TABLE messages (
 ### API Setup
 
 Copy chatapp_api/ to /var/www/html/ then update your IP in lib/services/api_service.dart:
-
+```dart
 static const String baseUrl = "http://YOUR_IP/chatapp_api";
-
+```
 ### API Files
 
 config.php — Database connection and CORS headers
