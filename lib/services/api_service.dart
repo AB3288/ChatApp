@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ApiService {
-  static const String baseUrl = "http://IP?/chatapp_api";
+  static const String baseUrl = "http://172.16.47.227/chatapp_api";
 
   static Future<Map<String, dynamic>> auth(String email, String password) async {
     final response = await http.post(

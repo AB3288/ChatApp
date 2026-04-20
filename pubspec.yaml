@@ -24,7 +24,6 @@ flutter:
   
   assets:
     - assets/fonts/chat1.png
-    - assets/fonts/icon.png
   fonts:
     - family: PressStart2P
       fonts:

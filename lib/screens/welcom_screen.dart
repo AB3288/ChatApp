@@ -46,22 +46,26 @@ class _WelcomScreenState extends State<WelcomScreen> {
 
     try {
       final data = await ApiService.auth(email, password);
-      if (data['success']) {
-        await SessionService.saveSession(data['user']['id'], data['user']['email']);
+      if (data['success'] == true) {
+        // ← Parse en int pour éviter l'erreur String/int
+        final int userId = int.parse(data['user']['id'].toString());
+        final String userEmail = data['user']['email'].toString();
+
+        await SessionService.saveSession(userId, userEmail);
         if (!mounted) return;
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
             builder: (context) => ChatScreen(
-              email: data['user']['email'],
-              userId: data['user']['id'],
+              email: userEmail,
+              userId: userId,
             ),
           ),
         );
       } else {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(data['error'] ?? "Erreur")),
+          SnackBar(content: Text(data['error']?.toString() ?? "Erreur")),
         );
       }
     } catch (e) {

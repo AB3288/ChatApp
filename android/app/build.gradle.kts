@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "mr.abdallahimessage.messanger"
-    compileSdk = 34
+    compileSdk = 36
     defaultConfig {
         applicationId = "mr.abdallahimessage.messanger"
         minSdk = flutter.minSdkVersion
