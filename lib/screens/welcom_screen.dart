@@ -106,8 +106,10 @@ class _WelcomScreenState extends State<WelcomScreen> {
             TextField(
               controller: emailController,
               keyboardType: TextInputType.emailAddress,
+              style: TextStyle(color: Colors.white),
               decoration: InputDecoration(
                 labelText: "Email",
+                labelStyle: TextStyle(color: Colors.grey),
                 prefixIcon: Icon(Icons.email_outlined),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 focusedBorder: OutlineInputBorder(
@@ -120,8 +122,10 @@ class _WelcomScreenState extends State<WelcomScreen> {
             TextField(
               controller: passwordController,
               obscureText: _obscurePassword,
+              style: TextStyle(color: Colors.white),
               decoration: InputDecoration(
                 labelText: "Mot de passe",
+                labelStyle: TextStyle(color: Colors.grey),
                 prefixIcon: Icon(Icons.lock_outline),
                 suffixIcon: IconButton(
                   icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
